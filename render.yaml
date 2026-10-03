@@ -1,0 +1,21 @@
+# Render Blueprint — CMK Recap SaaS backend
+# Upload this file as "render.yaml" in your GitHub repo ROOT,
+# together with: server.js, package.json, Dockerfile (+ .env.example optional).
+services:
+  - type: web
+    name: cmk-recap-saas
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # you paste your billed key in the Render dashboard
+      - key: ADMIN_KEY
+        generateValue: true # Render creates a long random secret for you
+      - key: DB_PATH
+        value: ./saas.db
+      - key: ALLOWED_ORIGINS
+        value: https://cmkrecapstudio.blogspot.com
+      - key: NODE_ENV
+        value: production
