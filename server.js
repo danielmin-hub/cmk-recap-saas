@@ -185,13 +185,19 @@ async function waitForActive(fileUri) {
 }
 
 function buildPrompt(duration) {
+  const dur = Number(duration) || 0;
+  const nScenes = dur > 600 ? '10-16' : dur > 300 ? '8-12' : '4-8';
   return 'Analyze this video and create a Burmese recap dubbing plan. Return ONLY valid JSON:\n' +
-    '{"scenes":[{"start":0,"end":5.2,"narration":"မြန်မာ recap narration"}],"full_script":"..."}\n' +
-    'Use 4-8 chronological scenes. Give numeric timestamps in seconds. Cover the important visual story. ' +
-    'Write each narration in NATURAL SPOKEN Burmese, like a friendly YouTuber explaining the video out loud — ' +
-    'short simple sentences, conversational tone, no stiff written-style language. ' +
-    'Keep each narration short enough to speak naturally in its time window. Do not translate dialogue word-for-word. ' +
-    'Narrate what the viewer needs to understand. Video duration is about ' + Number(duration).toFixed(2) + ' seconds.';
+    '{"scenes":[{"start":0,"end":5.2,"narration":"\u1019\u103c\u1014\u103a\u1019\u102c recap narration"}],"full_script":"..."}\n' +
+    'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Cover the important visual story.\n' +
+    'SCRIPT QUALITY RULES (V2):\n' +
+    '1. HOOK: the first scene narration must grab attention in 3 seconds - a question, a shock, or a tease.\n' +
+    '2. Write in NATURAL SPOKEN Burmese, like a popular YouTuber telling the story out loud - short punchy sentences, conversational, dramatic.\n' +
+    '3. End scenes on mini-cliffhangers or curiosity gaps so viewers keep watching.\n' +
+    '4. Name characters and keep names consistent across scenes.\n' +
+    '5. Keep each narration short enough to speak naturally in its time window. Do not translate dialogue word-for-word.\n' +
+    '6. Narrate what the viewer needs to understand; skip filler.\n' +
+    'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
 async function ttsOne(text, voice, model) {
@@ -310,15 +316,14 @@ app.get('/api/me', auth, (req, res) => {
 });
 
 // Step 1: begin a resumable Google upload. Client PUTs the video bytes straight to Google.
-// Upload video: browser POSTs raw bytes here; server forwards to Google.
-// (Browser -> Google direct upload was unreliable on some networks, and it
-// leaked the owner key inside the resumable upload URL.)
-app.post('/api/upload-video', auth, express.raw({ type: '*/*', limit: '800mb' }), async (req, res) => {
+// Upload video: browser streams bytes here; server pipes them straight to Google.
+// (v1.4.1: streaming — no RAM buffering, so large videos don't OOM the server.
+// Browser never touches Google directly; the owner's GEMINI_API_KEY never leaves here.)
+app.post('/api/upload-video', auth, async (req, res) => {
   try {
-    const buf = req.body;
-    const size = Buffer.isBuffer(buf) ? buf.length : 0;
+    const size = Number(req.get('Content-Length') || 0);
     const mimeType = (req.get('Content-Type') || 'video/mp4').split(';')[0].trim() || 'video/mp4';
-    if (!Buffer.isBuffer(buf) || size <= 0 || size > 750 * 1024 * 1024)
+    if (!Number.isFinite(size) || size <= 0 || size > 750 * 1024 * 1024)
       return res.status(400).json({ error: 'Invalid video (max 750MB)' });
     if (!checkDailyCap(req.user.id, 'analyze')) return res.status(429).json({ error: 'Daily video limit reached — try tomorrow' });
     // 1. open resumable session (server key never leaves the server)
@@ -339,7 +344,7 @@ app.post('/api/upload-video', auth, express.raw({ type: '*/*', limit: '800mb' })
       try { const e = await startRes.json(); m = (e.error && e.error.message) || m; } catch (_) {}
       return res.status(502).json({ error: m });
     }
-    // 2. stream bytes to Google
+    // 2. pipe the incoming stream straight to Google (no buffering)
     const upRes = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
@@ -348,7 +353,8 @@ app.post('/api/upload-video', auth, express.raw({ type: '*/*', limit: '800mb' })
         'Content-Type': mimeType,
         'Content-Length': String(size)
       },
-      body: buf
+      body: req,
+      duplex: 'half'
     });
     if (!upRes.ok) {
       let m = 'Video upload to Google failed';
