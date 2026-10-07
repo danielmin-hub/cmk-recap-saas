@@ -195,13 +195,15 @@ function buildPrompt(duration) {
   return 'Analyze this video and create a Burmese recap dubbing plan. Return ONLY valid JSON:\n' +
     '{"scenes":[{"start":0,"end":5.2,"narration":"\u1019\u103c\u1014\u103a\u1019\u102c recap narration"}],"full_script":"..."}\n' +
     'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Cover the important visual story.\n' +
-    'SCRIPT QUALITY RULES (V2):\n' +
-    '1. HOOK: the first scene narration must grab attention in 3 seconds - a question, a shock, or a tease.\n' +
-    '2. Write in NATURAL SPOKEN Burmese, like a popular YouTuber telling the story out loud - short punchy sentences, conversational, dramatic.\n' +
-    '3. End scenes on mini-cliffhangers or curiosity gaps so viewers keep watching.\n' +
-    '4. Name characters and keep names consistent across scenes.\n' +
-    '5. Keep each narration short enough to speak naturally in its time window. Do not translate dialogue word-for-word.\n' +
-    '6. Narrate what the viewer needs to understand; skip filler.\n' +
+    'SCRIPT QUALITY RULES (V3 - HUMAN NARRATOR):\n' +
+    'Write EXACTLY like a real human narrator speaking into a microphone - NOT like a written article.\n' +
+    '1. HOOK: first scene must grab attention in 3 seconds - ask a question, drop a shock, or tease what is coming.\n' +
+    '2. SPEAK, DO NOT WRITE: use everyday spoken Burmese with natural particles (\u1015\u102b, \u1001\u1004\u103a\u1017\u103b\u102c, \u101c\u1031\u1038, \u1018\u1031\u1037). Never use formal written forms (\u101e\u100a\u103a, \u104d endings).\n' +
+    '3. VARY YOUR RHYTHM: mix short punchy lines with longer flowing ones. Pause with "..." where a real speaker would breathe. Use exclamations (\u1001\u103a!) and rhetorical questions naturally.\n' +
+    '4. SOUND HUMAN: add conversational fillers sparingly (\u1000\u103b\u1031\u1019\u1037\u103a..., \u1014\u1031\u102c\u1000\u103a...). React emotionally - surprise, suspense, humor - like you are watching WITH the viewer.\n' +
+    '5. End scenes on mini-cliffhangers or curiosity gaps.\n' +
+    '6. Name characters and keep names consistent.\n' +
+    '7. Keep each narration short enough to speak naturally in its time window. Narrate what the viewer needs; skip filler.\n' +
     'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
@@ -211,13 +213,15 @@ function buildVisualPrompt(duration) {
   return 'This video has NO speech or dialogue. Watch ONLY the visual content and create a Burmese narrator dubbing plan. Return ONLY valid JSON:\n' +
     '{"scenes":[{"start":0,"end":5.2,"narration":"\u1019\u103c\u1014\u103a\u1019\u102c narrator script"}],"full_script":"..."}\n' +
     'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Describe what is SEEN on screen.\n' +
-    'SCRIPT QUALITY RULES (V2 - VISUAL ONLY):\n' +
-    '1. HOOK: the first scene narration must grab attention in 3 seconds - a question, a shock, or a tease about what the viewer sees.\n' +
-    '2. Write in NATURAL SPOKEN Burmese, like a popular YouTuber narrating the visuals out loud - short punchy sentences, conversational, dramatic.\n' +
-    '3. Describe actions, emotions, visual details, and the unfolding story. Name visible characters and keep names consistent across scenes.\n' +
-    '4. End scenes on mini-cliffhangers or curiosity gaps so viewers keep watching.\n' +
-    '5. Keep each narration short enough to speak naturally in its time window.\n' +
-    '6. Never invent dialogue - narrate what is SEEN, never guess what might be said.\n' +
+    'SCRIPT QUALITY RULES (V3 - HUMAN NARRATOR, VISUAL ONLY):\n' +
+    'Write EXACTLY like a real human narrator speaking into a microphone - NOT like a written article.\n' +
+    '1. HOOK: first scene must grab attention in 3 seconds about what the viewer sees - a question, a shock, or a tease.\n' +
+    '2. SPEAK, DO NOT WRITE: use everyday spoken Burmese with natural particles (\u1015\u102b, \u1001\u1004\u103a\u1017\u103b\u102c, \u101c\u1031\u1038, \u1018\u1031\u1037). Never use formal written forms (\u101e\u100a\u103a, \u104d endings).\n' +
+    '3. VARY YOUR RHYTHM: mix short punchy lines with longer flowing ones. Pause with "..." where a real speaker would breathe. React emotionally to what you see - surprise, suspense, humor - like watching WITH the viewer.\n' +
+    '4. Describe actions, emotions, visual details, and the unfolding story. Name visible characters and keep names consistent.\n' +
+    '5. End scenes on mini-cliffhangers or curiosity gaps.\n' +
+    '6. Keep each narration short enough to speak naturally in its time window.\n' +
+    '7. Never invent dialogue - narrate what is SEEN, never guess what might be said.\n' +
     'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
