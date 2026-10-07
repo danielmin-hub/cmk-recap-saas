@@ -225,6 +225,27 @@ function buildVisualPrompt(duration) {
     'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
+// v1.4.2: gemini-3.8-flash-tts may return a complete WAV file in inlineData
+// instead of raw PCM16 (the 3.1 preview returned raw PCM16). Normalize to raw
+// PCM16 so the frontend makeWavFromPcm16/pcmToWav wrapping keeps working.
+// No-op for non-WAV payloads (magic-byte check).
+function wavToPcm16Base64(b64) {
+  let buf;
+  try { buf = Buffer.from(String(b64 || ''), 'base64'); } catch (e) { return b64; }
+  if (buf.length < 12 || buf.toString('ascii', 0, 4) !== 'RIFF') return b64;
+  let off = 12;
+  while (off + 8 <= buf.length) {
+    const id = buf.toString('ascii', off, off + 4);
+    const size = buf.readUInt32LE(off + 4);
+    if (!Number.isFinite(size) || size < 0 || off + 8 > buf.length) break;
+    if (id === 'data') {
+      const end = Math.min(off + 8 + size, buf.length);
+      return buf.slice(off + 8, end).toString('base64');
+    }
+    off += 8 + size + (size % 2);
+  }
+  return b64;
+}
 async function ttsOne(text, voice, model) {
   const data = await gFetch(
     'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(GEMINI_API_KEY),
@@ -241,7 +262,7 @@ async function ttsOne(text, voice, model) {
   const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
   const ap = parts.find(p => p.inlineData && p.inlineData.data);
   if (!ap) throw new Error('TTS returned no audio (' + model + ')');
-  return ap.inlineData.data; // base64 PCM16
+  return wavToPcm16Base64(ap.inlineData.data); // base64 PCM16 (WAV container stripped when 3.8 TTS returns WAV)
 }
 
 // ---------- App ----------
