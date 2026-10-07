@@ -1,4 +1,8 @@
-// CMK Recap Studio — SaaS backend v1.4 (plans + daily limits + upload proxy)
+// CMK Recap Studio — SaaS backend v1.4.2 (plans + daily limits + upload proxy + streaming + model migrations)
+// v1.4.2 (2026-10-07): model migrations per Google deprecation schedule (ai.google.dev/gemini-api/docs/deprecations, updated 2026-10-06):
+//   thumbnail gemini-3.1-flash-image -> gemini-nano-banana-2.1 (3.1-flash-image shuts down 2026-10-29)
+//   TTS chain -> gemini-3.8-flash-tts / gemini-3.8-flash-lite-tts (all three old TTS preview models shut down 2026-11-17)
+//   analysis stays gemini-3.8-flash (no shutdown announced)
 // Auth + credit ledger + plan-gated Gemini proxy (video analysis + Burmese TTS + thumbnails).
 // Plans: free/pro/premium/max. Recap & thumbnail are credit-only with daily
 // per-plan caps (pro 5/day each, premium 10/day each, max unlimited).
@@ -35,7 +39,8 @@ const PLAN_LIMIT = {
   max:     {}
 };
 // TTS model fallback chain (server tries each in order)
-const TTS_MODELS = ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts', 'gemini-3.1-flash-tts-preview'];
+// v1.4.2: old chain (2.5-flash-preview-tts / 2.5-pro-preview-tts / 3.1-flash-tts-preview) shuts down 2026-11-17 -> 3.8 TTS
+const TTS_MODELS = ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'];
 
 // ---------- DB ----------
 const db = new DatabaseSync(DB_PATH);
@@ -197,6 +202,22 @@ function buildPrompt(duration) {
     '4. Name characters and keep names consistent across scenes.\n' +
     '5. Keep each narration short enough to speak naturally in its time window. Do not translate dialogue word-for-word.\n' +
     '6. Narrate what the viewer needs to understand; skip filler.\n' +
+    'Video duration is about ' + dur.toFixed(2) + ' seconds.';
+}
+
+function buildVisualPrompt(duration) {
+  const dur = Number(duration) || 0;
+  const nScenes = dur > 600 ? '10-16' : dur > 300 ? '8-12' : '4-8';
+  return 'This video has NO speech or dialogue. Watch ONLY the visual content and create a Burmese narrator dubbing plan. Return ONLY valid JSON:\n' +
+    '{"scenes":[{"start":0,"end":5.2,"narration":"\u1019\u103c\u1014\u103a\u1019\u102c narrator script"}],"full_script":"..."}\n' +
+    'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Describe what is SEEN on screen.\n' +
+    'SCRIPT QUALITY RULES (V2 - VISUAL ONLY):\n' +
+    '1. HOOK: the first scene narration must grab attention in 3 seconds - a question, a shock, or a tease about what the viewer sees.\n' +
+    '2. Write in NATURAL SPOKEN Burmese, like a popular YouTuber narrating the visuals out loud - short punchy sentences, conversational, dramatic.\n' +
+    '3. Describe actions, emotions, visual details, and the unfolding story. Name visible characters and keep names consistent across scenes.\n' +
+    '4. End scenes on mini-cliffhangers or curiosity gaps so viewers keep watching.\n' +
+    '5. Keep each narration short enough to speak naturally in its time window.\n' +
+    '6. Never invent dialogue - narrate what is SEEN, never guess what might be said.\n' +
     'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
@@ -371,7 +392,9 @@ app.post('/api/upload-video', auth, async (req, res) => {
 // Step 2: analyze (deducts credits AFTER Google succeeds)
 app.post('/api/analyze', auth, async (req, res) => {
   try {
-    const { fileUri, mimeType, duration } = req.body || {};
+    const { fileUri, mimeType, duration, mode } = req.body || {};
+    const visualMode = mode === 'visual';
+    const promptText = visualMode ? buildVisualPrompt(duration || 60) : buildPrompt(duration || 60);
     if (typeof fileUri !== 'string' || !fileUri.includes('/files/'))
       return res.status(400).json({ error: 'Invalid fileUri — upload the video first' });
     if (!checkDailyCap(req.user.id, 'analyze')) return res.status(429).json({ error: 'Daily video limit reached — try tomorrow' });
@@ -389,7 +412,7 @@ app.post('/api/analyze', auth, async (req, res) => {
       {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ file_data: { mime_type: mimeType || 'video/mp4', file_uri: fileUri } }, { text: buildPrompt(duration || 60) }] }],
+          contents: [{ parts: [{ file_data: { mime_type: mimeType || 'video/mp4', file_uri: fileUri } }, { text: promptText }] }],
           generationConfig: { temperature: 0.25, responseMimeType: 'application/json' }
         })
       }, 3);
@@ -546,7 +569,7 @@ app.post('/api/thumbnail', auth, async (req, res) => {
       (style ? ', ' + style : '') + '. Subject: ' + prompt +
       '. No watermark. High contrast, readable at small size.';
     const data = await gFetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=' + encodeURIComponent(GEMINI_API_KEY),
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-nano-banana-2.1:generateContent?key=' + encodeURIComponent(GEMINI_API_KEY),
       {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
