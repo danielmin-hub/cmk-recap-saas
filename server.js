@@ -192,36 +192,67 @@ async function waitForActive(fileUri) {
 function buildPrompt(duration) {
   const dur = Number(duration) || 0;
   const nScenes = dur > 600 ? '10-16' : dur > 300 ? '8-12' : '4-8';
-  return 'Analyze this video and create a Burmese recap dubbing plan. Return ONLY valid JSON:\n' +
-    '{"scenes":[{"start":0,"end":5.2,"narration":"\u1019\u103c\u1014\u103a\u1019\u102c recap narration"}],"full_script":"..."}\n' +
-    'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Cover the important visual story.\n' +
-    'SCRIPT QUALITY RULES (V3 - HUMAN NARRATOR):\n' +
-    'Write EXACTLY like a real human narrator speaking into a microphone - NOT like a written article.\n' +
-    '1. HOOK: first scene must grab attention in 3 seconds - ask a question, drop a shock, or tease what is coming.\n' +
-    '2. SPEAK, DO NOT WRITE: use everyday spoken Burmese with natural particles (\u1015\u102b, \u1001\u1004\u103a\u1017\u103b\u102c, \u101c\u1031\u1038, \u1018\u1031\u1037). Never use formal written forms (\u101e\u100a\u103a, \u104d endings).\n' +
-    '3. VARY YOUR RHYTHM: mix short punchy lines with longer flowing ones. Pause with "..." where a real speaker would breathe. Use exclamations (\u1001\u103a!) and rhetorical questions naturally.\n' +
-    '4. SOUND HUMAN: add conversational fillers sparingly (\u1000\u103b\u1031\u1019\u1037\u103a..., \u1014\u1031\u102c\u1000\u103a...). React emotionally - surprise, suspense, humor - like you are watching WITH the viewer.\n' +
-    '5. End scenes on mini-cliffhangers or curiosity gaps.\n' +
-    '6. Name characters and keep names consistent.\n' +
-    '7. Keep each narration short enough to speak naturally in its time window. Narrate what the viewer needs; skip filler.\n' +
+  return 'Analyze this video and create a Burmese recap dubbing plan. Return ONLY valid JSON:\\n' +
+    '{\"scenes\":[{\"start\":0,\"end\":5.2,\"narration\":\"\u101f\u102c! \u1012...\"}],\"full_script\":\"...\"}\\n' +
+    'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Cover the important visual story.\\n' +
+    'YOU ARE A VIRAL RECAP CREATOR: you run a top Myanmar recap channel on YouTube/TikTok. Millions watch because viewers FEEL the story with you. Write EXACTLY like a human speaking into a microphone to a friend - never like a written article, never like a news reader.\\n' +
+    '=== THE HOOK (first 3 seconds decides everything) ===\\n' +
+    'Your FIRST line must STOP the scroll. Use one of these: (a) a shocking question, (b) a bold tease of what is coming, (c) a contradiction. Example hook: \"\u1012\u102e\u1019\u102d\u1014\u103a\u1038\u1000\u101c\u1031\u1038\u1000\u102d\u102f \u101c\u1030\u1010\u102d\u102f\u1004\u103a\u1038\u1000 \u1021\u101b\u1030\u1038\u101c\u102d\u102f\u1037 \u1011\u1004\u103a\u1001\u1032\u1037\u1000\u103c\u1010\u101a\u103a... \u1012\u102b\u1015\u1031\u1019\u101a\u1037\u103a \u1012\u102e\u100a... \u101e\u1030 \u1014\u1014\u103a\u1038\u1010\u1031\u102c\u103a\u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u1010\u102f\u1014\u103a\u101c\u103e\u102f\u1015\u103a\u101e\u103d\u102c\u1038\u1005\u1031\u101c\u102d\u1019\u1037\u103a\u1019\u101a\u103a!\"\\n' +
+    'NEVER open with flat description. Study these GOOD vs BAD pairs and always write the GOOD way:\\n' +
+    'BAD: \"\u1012\u102e\u1014\u1031\u101b\u102c\u1010\u103d\u1004\u103a \u1007\u102c\u1010\u103a\u1000\u1031\u102c\u1004\u103a\u101e\u100a\u103a \u1021\u1001\u1014\u103a\u1038\u1011\u1032\u101e\u102d\u102f\u1037 \u101d\u1004\u103a\u101c\u102c\u101e\u100a\u103a\u104b\"\\n' +
+    'GOOD: \"\u101f\u102c! \u1012\u102e\u1010\u1005\u103a\u101a\u1031\u102c\u1000\u103a \u1021\u1001\u1014\u103a\u1038\u1011\u1032 \u1018\u102c\u101c\u102f\u1015\u103a\u1016\u102d\u102f\u1037 \u101d\u1004\u103a\u101c\u102c\u1010\u102c\u101c\u1032? \u1010\u1005\u103a\u1001\u102f\u1001\u102f\u1010\u1031\u102c\u1037 \u1016\u103c\u1005\u103a\u1010\u1031\u102c\u1037\u1019\u101a\u103a...\"\\n' +
+    'BAD: \"\u101e\u1030\u101e\u100a\u103a \u1021\u101b\u1019\u103a\u1038\u1012\u1031\u102b\u101e\u1011\u103d\u1000\u103a\u1014\u1031\u101e\u100a\u103a\u104b\"\\n' +
+    'GOOD: \"\u1000\u103c\u100a\u1037\u103a\u1026\u1038... \u101e\u1030\u1037\u1019\u103b\u1000\u103a\u101c\u102f\u1036\u1038\u1010\u103d\u1031 \u1019\u102e\u1038\u1010\u1031\u102c\u1000\u103a\u1014\u1031\u1015\u103c\u102e! \u1012\u102b \u1010\u1031\u102c\u103a\u101b\u102f\u1036\u1012\u1031\u102b\u1012\u1031\u102b\u1019\u101f\u102f\u1010\u103a\u1018\u1030\u1038\u104a \u1010\u1005\u103a\u1001\u102f\u1001\u102f\u1000\u103c\u102e\u1038\u1010\u1031\u102c\u1037\u1019\u101a\u103a!\"\\n' +
+    'BAD: \"\u1011\u102d\u102f\u1037\u1014\u1031\u102c\u1000\u103a \u101e\u1030\u1010\u102d\u102f\u1037\u101e\u100a\u103a \u1005\u1000\u102c\u1038\u1015\u103c\u1031\u102c\u1000\u103c\u1015\u103c\u102e\u1038 \u1015\u103c\u1014\u103a\u101e\u103d\u102c\u1038\u1000\u103c\u101e\u100a\u103a\u104b\"\\n' +
+    'GOOD: \"\u1012\u102e\u1005\u1000\u102c\u1038\u1010\u1005\u103a\u1001\u103d\u1014\u103a\u1038\u1000... \u1021\u101b\u102c\u1021\u102c\u1038\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u101c\u1032\u101e\u103d\u102c\u1038\u1005\u1031\u1010\u101a\u103a\u104b \u101e\u1030 \u1015\u103c\u1014\u103a\u101c\u103e\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1010\u1032\u1037\u1021\u1001\u103b\u102d\u1014\u103a\u1019\u103e\u102c... \u1007\u102c\u1010\u103a\u101c\u1019\u103a\u1038\u1000 \u1010\u1000\u101a\u103a\u1005\u1015\u103c\u102e!\"\\n' +
+    '=== STORY ARC ===\\n' +
+    'Shape every recap as: SETUP (who matters, what they want) -> INCITING MOMENT (what goes wrong) -> RISING TENSION (stakes higher each scene) -> CLIMAX (peak moment) -> CLIFFHANGER (never resolve everything; leave one burning question).\\n' +
+    'End EVERY scene on a mini-cliffhanger or curiosity gap so the viewer NEEDS the next scene. Never let a scene fade out flat.\\n' +
+    '=== EMOTIONAL BEATS ===\\n' +
+    'React OUT LOUD like a friend watching with the viewer: gasp at twists (\"\u101f\u102c!\"), whisper before a reveal (\"\u1014\u102c\u1038\u1011\u1031\u102c\u1004\u103a\u1000\u103c\u100a\u1037\u103a...\"), laugh at irony, get angry at villains.\\n' +
+    'Ask the viewer rhetorical questions (\"\u1019\u1004\u103a\u1038\u1010\u102d\u102f\u1037\u101b\u1031\u102c \u1012\u102e\u101c\u102d\u102f\u101c\u102f\u1015\u103a\u1014\u102d\u102f\u1004\u103a\u1019\u101c\u102c\u1038?\"). If a scene is boring, SKIP it entirely - never narrate filler.\\n' +
+    '=== CHARACTER INVESTMENT ===\\n' +
+    'Give each important character a one-line personality tag early, e.g. \"\u1009\u102c\u100f\u103a\u1000\u1031\u102c\u1004\u103a\u1038\u1015\u103c\u102e\u1038 \u101b\u1000\u103a\u1005\u1000\u103a\u1010\u1032\u1037 \u1019\u102d\u1016\u102f\u101b\u102c\u1038\". Make the viewer root for someone and hate someone. Name characters and keep names consistent.\\n' +
+    '=== CHINESE DRAMA INSTINCTS ===\\n' +
+    'These videos are often palace-intrigue / romance / revenge stories. Watch for: hidden identities, betrayals, poison plots, love triangles, face-slapping confrontations, power reversals. When you spot the game, name it (\"\u1012\u102b \u1014\u1014\u103a\u1038\u1010\u103d\u1004\u103a\u1038\u1014\u102d\u102f\u1004\u103a\u1004\u1036\u101b\u1031\u1038\u1015\u1032...\"). Build up confrontations - NEVER spoil a slap or reveal before it lands.\\n' +
+    '=== SPOKEN BURMESE ONLY ===\\n' +
+    'Use everyday spoken particles (\u1010\u101a\u103a, \u1001\u1032\u1037\u1010\u101a\u103a, \u101c\u1031, \u1014\u1031\u1010\u101a\u103a, \u1010\u102c\u1015\u1031\u102b\u1037). NEVER use formal written forms (\u101e\u100a\u103a, \u104f endings).\\n' +
+    'PACING: short punchy lines for action (\"\u1015\u103c\u1031\u1038\u1038!\"); slower lines for emotional moments. Pause with \"\"...\"\" where a real speaker breathes.\\n' +
+    '=== NO FILLER ===\\n' +
+    'Every line must earn its place - it must move the STORY or the FEELING forward. Cut anything boring. Keep each narration short enough to speak naturally in its time window.\\n' +
     'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
 function buildVisualPrompt(duration) {
   const dur = Number(duration) || 0;
   const nScenes = dur > 600 ? '10-16' : dur > 300 ? '8-12' : '4-8';
-  return 'This video has NO speech or dialogue. Watch ONLY the visual content and create a Burmese narrator dubbing plan. Return ONLY valid JSON:\n' +
-    '{"scenes":[{"start":0,"end":5.2,"narration":"\u1019\u103c\u1014\u103a\u1019\u102c narrator script"}],"full_script":"..."}\n' +
-    'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Describe what is SEEN on screen.\n' +
-    'SCRIPT QUALITY RULES (V3 - HUMAN NARRATOR, VISUAL ONLY):\n' +
-    'Write EXACTLY like a real human narrator speaking into a microphone - NOT like a written article.\n' +
-    '1. HOOK: first scene must grab attention in 3 seconds about what the viewer sees - a question, a shock, or a tease.\n' +
-    '2. SPEAK, DO NOT WRITE: use everyday spoken Burmese with natural particles (\u1015\u102b, \u1001\u1004\u103a\u1017\u103b\u102c, \u101c\u1031\u1038, \u1018\u1031\u1037). Never use formal written forms (\u101e\u100a\u103a, \u104d endings).\n' +
-    '3. VARY YOUR RHYTHM: mix short punchy lines with longer flowing ones. Pause with "..." where a real speaker would breathe. React emotionally to what you see - surprise, suspense, humor - like watching WITH the viewer.\n' +
-    '4. Describe actions, emotions, visual details, and the unfolding story. Name visible characters and keep names consistent.\n' +
-    '5. End scenes on mini-cliffhangers or curiosity gaps.\n' +
-    '6. Keep each narration short enough to speak naturally in its time window.\n' +
-    '7. Never invent dialogue - narrate what is SEEN, never guess what might be said.\n' +
+  return 'This video has NO speech or dialogue. Watch ONLY the visual content and create a Burmese narrator dubbing plan. Return ONLY valid JSON:\\n' +
+    '{\"scenes\":[{\"start\":0,\"end\":5.2,\"narration\":\"\u101f\u102c! \u1012...\"}],\"full_script\":\"...\"}\\n' +
+    'Use ' + nScenes + ' chronological scenes. Give numeric timestamps in seconds. Describe what is SEEN on screen.\\n' +
+    'YOU ARE A VIRAL RECAP CREATOR: you run a top Myanmar recap channel. Viewers cannot hear this video, so YOU are their eyes and their feelings. Write EXACTLY like a human speaking into a microphone - never like a written article.\\n' +
+    '=== THE HOOK (first 3 seconds decides everything) ===\\n' +
+    'Your FIRST line must STOP the scroll - a shocking visual question, a bold tease of what the viewer is about to see, or a contradiction. Example hook: \"\u1012\u102e\u1019\u102d\u1014\u103a\u1038\u1000\u101c\u1031\u1038\u1000\u102d\u102f \u101c\u1030\u1010\u102d\u102f\u1004\u103a\u1038\u1000 \u1021\u101b\u1030\u1038\u101c\u102d\u102f\u1037 \u1011\u1004\u103a\u1001\u1032\u1037\u1000\u103c\u1010\u101a\u103a... \u1012\u102b\u1015\u1031\u1019\u101a\u1037\u103a \u1012\u102e\u100a... \u101e\u1030 \u1014\u1014\u103a\u1038\u1010\u1031\u102c\u103a\u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u1010\u102f\u1014\u103a\u101c\u103e\u102f\u1015\u103a\u101e\u103d\u102c\u1038\u1005\u1031\u101c\u102d\u1019\u1037\u103a\u1019\u101a\u103a!\"\\n' +
+    'NEVER open with flat description. Study these GOOD vs BAD pairs and always write the GOOD way:\\n' +
+    'BAD: \"\u1012\u102e\u1014\u1031\u101b\u102c\u1010\u103d\u1004\u103a \u1007\u102c\u1010\u103a\u1000\u1031\u102c\u1004\u103a\u101e\u100a\u103a \u1021\u1001\u1014\u103a\u1038\u1011\u1032\u101e\u102d\u102f\u1037 \u101d\u1004\u103a\u101c\u102c\u101e\u100a\u103a\u104b\"\\n' +
+    'GOOD: \"\u101f\u102c! \u1012\u102e\u1010\u1005\u103a\u101a\u1031\u102c\u1000\u103a \u1021\u1001\u1014\u103a\u1038\u1011\u1032 \u1018\u102c\u101c\u102f\u1015\u103a\u1016\u102d\u102f\u1037 \u101d\u1004\u103a\u101c\u102c\u1010\u102c\u101c\u1032? \u1010\u1005\u103a\u1001\u102f\u1001\u102f\u1010\u1031\u102c\u1037 \u1016\u103c\u1005\u103a\u1010\u1031\u102c\u1037\u1019\u101a\u103a...\"\\n' +
+    'BAD: \"\u101e\u1030\u101e\u100a\u103a \u1021\u101b\u1019\u103a\u1038\u1012\u1031\u102b\u101e\u1011\u103d\u1000\u103a\u1014\u1031\u101e\u100a\u103a\u104b\"\\n' +
+    'GOOD: \"\u1000\u103c\u100a\u1037\u103a\u1026\u1038... \u101e\u1030\u1037\u1019\u103b\u1000\u103a\u101c\u102f\u1036\u1038\u1010\u103d\u1031 \u1019\u102e\u1038\u1010\u1031\u102c\u1000\u103a\u1014\u1031\u1015\u103c\u102e! \u1012\u102b \u1010\u1031\u102c\u103a\u101b\u102f\u1036\u1012\u1031\u102b\u1012\u1031\u102b\u1019\u101f\u102f\u1010\u103a\u1018\u1030\u1038\u104a \u1010\u1005\u103a\u1001\u102f\u1001\u102f\u1000\u103c\u102e\u1038\u1010\u1031\u102c\u1037\u1019\u101a\u103a!\"\\n' +
+    '=== STORY ARC FROM VISUALS ===\\n' +
+    'Shape every recap as: SETUP (who matters - name visible characters) -> INCITING MOMENT (what visually goes wrong) -> RISING TENSION (stakes higher each scene) -> CLIMAX (visual peak) -> CLIFFHANGER (leave one burning question).\\n' +
+    'End EVERY scene on a mini-cliffhanger or curiosity gap. Never let a scene fade out flat.\\n' +
+    '=== EMOTIONAL BEATS ===\\n' +
+    'React OUT LOUD to what you SEE like a friend watching with the viewer: gasp at visual twists (\"\u101f\u102c!\"), whisper before a reveal (\"\u1014\u102c\u1038\u1011\u1031\u102c\u1004\u103a\u1000\u103c\u100a\u1037\u103a...\"), laugh at irony, get angry at villains.\\n' +
+    'Describe actions, faces, visual details AND the feeling. Ask the viewer rhetorical questions (\"\u1019\u1004\u103a\u1038\u1010\u102d\u102f\u1037\u101b\u1031\u102c \u1012\u102e\u101c\u102d\u102f\u101c\u102f\u1015\u103a\u1014\u102d\u102f\u1004\u103a\u1019\u101c\u102c\u1038?\"). If a visual moment is boring, SKIP it - never narrate filler.\\n' +
+    '=== CHARACTER INVESTMENT ===\\n' +
+    'Give each visible character a one-line personality tag early, e.g. \"\u1009\u102c\u100f\u103a\u1000\u1031\u102c\u1004\u103a\u1038\u1015\u103c\u102e\u1038 \u101b\u1000\u103a\u1005\u1000\u103a\u1010\u1032\u1037 \u1019\u102d\u1016\u102f\u101b\u102c\u1038\". Make the viewer root for someone and hate someone. Keep names consistent.\\n' +
+    '=== CHINESE DRAMA INSTINCTS (VISUAL) ===\\n' +
+    'These videos are often palace-intrigue / romance / revenge. Read the visuals for: hidden identities (masks, disguises), betrayals (a look, a letter), poison plots (cups, medicine), love triangles, face-slapping confrontations, power reversals. When you spot the game, name it (\"\u1012\u102b \u1014\u1014\u103a\u1038\u1010\u103d\u1004\u103a\u1038\u1014\u102d\u102f\u1004\u103a\u1004\u1036\u101b\u1031\u1038\u1015\u1032...\"). Build up confrontations - NEVER spoil a slap or reveal before it lands.\\n' +
+    '=== SPOKEN BURMESE ONLY ===\\n' +
+    'Use everyday spoken particles (\u1010\u101a\u103a, \u1001\u1032\u1037\u1010\u101a\u103a, \u101c\u1031, \u1014\u1031\u1010\u101a\u103a, \u1010\u102c\u1015\u1031\u102b\u1037). NEVER use formal written forms (\u101e\u100a\u103a, \u104f endings).\\n' +
+    'PACING: short punchy lines for action (\"\u1015\u103c\u1031\u1038\u1038!\"); slower lines for emotional moments. Pause with \"\"...\"\" where a real speaker breathes.\\n' +
+    '=== NEVER INVENT DIALOGUE ===\\n' +
+    'Narrate what is SEEN; never guess what might be said. But DO narrate what characters FEEL from their faces and actions.\\n' +
+    'Keep each narration short enough to speak naturally in its time window.\\n' +
     'Video duration is about ' + dur.toFixed(2) + ' seconds.';
 }
 
